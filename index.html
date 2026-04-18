@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inženýrský Network Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #050505;
+            --card: #111111;
+            --ping-clr: #ff0055;
+            --down-clr: #00f2ff;
+            --up-clr: #b2ff00;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Consolas', monospace;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .chart-section {
+            flex: 1;
+            background: var(--card);
+            margin-bottom: 8px;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid #333;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .value { font-size: 1.2rem; font-weight: bold; }
+        
+        canvas { flex-grow: 1 !important; max-height: 85% !important; }
+
+        #ping-sec { border-left-color: var(--ping-clr); }
+        #down-sec { border-left-color: var(--down-clr); }
+        #up-sec { border-left-color: var(--up-clr); }
+    </style>
+</head>
+<body>
+
+    <div class="chart-section" id="ping-sec">
+        <div class="info"><span>Latency / Ping</span><span class="value" id="v-ping">0 ms</span></div>
+        <canvas id="c-ping"></canvas>
+    </div>
+
+    <div class="chart-section" id="down-sec">
+        <div class="info"><span>Download Rate</span><span class="value" id="v-down">0 Mbps</span></div>
+        <canvas id="c-down"></canvas>
+    </div>
+
+    <div class="chart-section" id="up-sec">
+        <div class="info"><span>Upload Rate</span><span class="value" id="v-up">0 Mbps</span></div>
+        <canvas id="c-up"></canvas>
+    </div>
+
+    <script>
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false, // Vypnutí animací pro "rovné" okamžité překreslování
+            elements: { line: { tension: 0 } }, // Striktně rovné čáry
+            scales: {
+                x: { display: false },
+                y: { grid: { color: '#222' }, ticks: { display: false } }
+            },
+            plugins: { legend: { display: false } }
+        };
+
+        function createChart(id, color) {
+            return new Chart(document.getElementById(id), {
+                type: 'line',
+                data: {
+                    labels: Array(40).fill(''),
+                    datasets: [{
+                        borderColor: color,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        data: Array(40).fill(0)
+                    }]
+                },
+                options: commonOptions
+            });
+        }
+
+        const chartPing = createChart('c-ping', '#ff0055');
+        const chartDown = createChart('c-down', '#00f2ff');
+        const chartUp = createChart('c-up', '#b2ff00');
+
+        async function update() {
+            // Měření pingu
+            const start = Date.now();
+            let ping;
+            try {
+                await fetch('https://www.google.com', { mode: 'no-cors', cache: 'no-cache' });
+                ping = Date.now() - start;
+            } catch { ping = 0; }
+
+            // Simulace/Získání rychlostí
+            const down = navigator.connection ? (navigator.connection.downlink * (0.9 + Math.random() * 0.2)).toFixed(1) : (20 + Math.random() * 5).toFixed(1);
+            const up = (down * 0.3 + Math.random() * 2).toFixed(1);
+
+            // Update hodnot a grafů
+            const updateChart = (chart, val, elId, unit) => {
+                document.getElementById(elId).textContent = val + ' ' + unit;
+                chart.data.datasets[0].data.shift();
+                chart.data.datasets[0].data.push(val);
+                chart.update('none'); // Update bez animace pro inženýrský look
+            };
+
+            updateChart(chartPing, ping, 'v-ping', 'ms');
+            updateChart(chartDown, down, 'v-down', 'Mbps');
+            updateChart(chartUp, up, 'v-up', 'Mbps');
+        }
+
+        setInterval(update, 1000);
+        update();
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inženýrský Network Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #050505;
+            --card: #111111;
+            --ping-clr: #ff0055;
+            --down-clr: #00f2ff;
+            --up-clr: #b2ff00;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Consolas', monospace;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .chart-section {
+            flex: 1;
+            background: var(--card);
+            margin-bottom: 8px;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid #333;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .value { font-size: 1.2rem; font-weight: bold; }
+        
+        canvas { flex-grow: 1 !important; max-height: 85% !important; }
+
+        #ping-sec { border-left-color: var(--ping-clr); }
+        #down-sec { border-left-color: var(--down-clr); }
+        #up-sec { border-left-color: var(--up-clr); }
+    </style>
+</head>
+<body>
+
+    <div class="chart-section" id="ping-sec">
+        <div class="info"><span>Latency / Ping</span><span class="value" id="v-ping">0 ms</span></div>
+        <canvas id="c-ping"></canvas>
+    </div>
+
+    <div class="chart-section" id="down-sec">
+        <div class="info"><span>Download Rate</span><span class="value" id="v-down">0 Mbps</span></div>
+        <canvas id="c-down"></canvas>
+    </div>
+
+    <div class="chart-section" id="up-sec">
+        <div class="info"><span>Upload Rate</span><span class="value" id="v-up">0 Mbps</span></div>
+        <canvas id="c-up"></canvas>
+    </div>
+
+    <script>
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false, // Vypnutí animací pro "rovné" okamžité překreslování
+            elements: { line: { tension: 0 } }, // Striktně rovné čáry
+            scales: {
+                x: { display: false },
+                y: { grid: { color: '#222' }, ticks: { display: false } }
+            },
+            plugins: { legend: { display: false } }
+        };
+
+        function createChart(id, color) {
+            return new Chart(document.getElementById(id), {
+                type: 'line',
+                data: {
+                    labels: Array(40).fill(''),
+                    datasets: [{
+                        borderColor: color,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        data: Array(40).fill(0)
+                    }]
+                },
+                options: commonOptions
+            });
+        }
+
+        const chartPing = createChart('c-ping', '#ff0055');
+        const chartDown = createChart('c-down', '#00f2ff');
+        const chartUp = createChart('c-up', '#b2ff00');
+
+        async function update() {
+            // Měření pingu
+            const start = Date.now();
+            let ping;
+            try {
+                await fetch('https://www.google.com', { mode: 'no-cors', cache: 'no-cache' });
+                ping = Date.now() - start;
+            } catch { ping = 0; }
+
+            // Simulace/Získání rychlostí
+            const down = navigator.connection ? (navigator.connection.downlink * (0.9 + Math.random() * 0.2)).toFixed(1) : (20 + Math.random() * 5).toFixed(1);
+            const up = (down * 0.3 + Math.random() * 2).toFixed(1);
+
+            // Update hodnot a grafů
+            const updateChart = (chart, val, elId, unit) => {
+                document.getElementById(elId).textContent = val + ' ' + unit;
+                chart.data.datasets[0].data.shift();
+                chart.data.datasets[0].data.push(val);
+                chart.update('none'); // Update bez animace pro inženýrský look
+            };
+
+            updateChart(chartPing, ping, 'v-ping', 'ms');
+            updateChart(chartDown, down, 'v-down', 'Mbps');
+            updateChart(chartUp, up, 'v-up', 'Mbps');
+        }
+
+        setInterval(update, 1000);
+        update();
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inženýrský Network Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #050505;
+            --card: #111111;
+            --ping-clr: #ff0055;
+            --down-clr: #00f2ff;
+            --up-clr: #b2ff00;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Consolas', monospace;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .chart-section {
+            flex: 1;
+            background: var(--card);
+            margin-bottom: 8px;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid #333;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .value { font-size: 1.2rem; font-weight: bold; }
+        
+        canvas { flex-grow: 1 !important; max-height: 85% !important; }
+
+        #ping-sec { border-left-color: var(--ping-clr); }
+        #down-sec { border-left-color: var(--down-clr); }
+        #up-sec { border-left-color: var(--up-clr); }
+    </style>
+</head>
+<body>
+
+    <div class="chart-section" id="ping-sec">
+        <div class="info"><span>Latency / Ping</span><span class="value" id="v-ping">0 ms</span></div>
+        <canvas id="c-ping"></canvas>
+    </div>
+
+    <div class="chart-section" id="down-sec">
+        <div class="info"><span>Download Rate</span><span class="value" id="v-down">0 Mbps</span></div>
+        <canvas id="c-down"></canvas>
+    </div>
+
+    <div class="chart-section" id="up-sec">
+        <div class="info"><span>Upload Rate</span><span class="value" id="v-up">0 Mbps</span></div>
+        <canvas id="c-up"></canvas>
+    </div>
+
+    <script>
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false, // Vypnutí animací pro "rovné" okamžité překreslování
+            elements: { line: { tension: 0 } }, // Striktně rovné čáry
+            scales: {
+                x: { display: false },
+                y: { grid: { color: '#222' }, ticks: { display: false } }
+            },
+            plugins: { legend: { display: false } }
+        };
+
+        function createChart(id, color) {
+            return new Chart(document.getElementById(id), {
+                type: 'line',
+                data: {
+                    labels: Array(40).fill(''),
+                    datasets: [{
+                        borderColor: color,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        data: Array(40).fill(0)
+                    }]
+                },
+                options: commonOptions
+            });
+        }
+
+        const chartPing = createChart('c-ping', '#ff0055');
+        const chartDown = createChart('c-down', '#00f2ff');
+        const chartUp = createChart('c-up', '#b2ff00');
+
+        async function update() {
+            // Měření pingu
+            const start = Date.now();
+            let ping;
+            try {
+                await fetch('https://www.google.com', { mode: 'no-cors', cache: 'no-cache' });
+                ping = Date.now() - start;
+            } catch { ping = 0; }
+
+            // Simulace/Získání rychlostí
+            const down = navigator.connection ? (navigator.connection.downlink * (0.9 + Math.random() * 0.2)).toFixed(1) : (20 + Math.random() * 5).toFixed(1);
+            const up = (down * 0.3 + Math.random() * 2).toFixed(1);
+
+            // Update hodnot a grafů
+            const updateChart = (chart, val, elId, unit) => {
+                document.getElementById(elId).textContent = val + ' ' + unit;
+                chart.data.datasets[0].data.shift();
+                chart.data.datasets[0].data.push(val);
+                chart.update('none'); // Update bez animace pro inženýrský look
+            };
+
+            updateChart(chartPing, ping, 'v-ping', 'ms');
+            updateChart(chartDown, down, 'v-down', 'Mbps');
+            updateChart(chartUp, up, 'v-up', 'Mbps');
+        }
+
+        setInterval(update, 1000);
+        update();
+    </script>
+</body>
+</html>
